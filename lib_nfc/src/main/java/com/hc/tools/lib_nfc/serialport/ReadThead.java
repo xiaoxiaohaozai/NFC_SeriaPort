@@ -1,7 +1,7 @@
 package com.hc.tools.lib_nfc.serialport;
 
 
-
+import com.hc.tools.lib_nfc.constant.Config;
 import com.hc.tools.lib_nfc.utils.ByteUtils;
 import com.hc.tools.lib_nfc.utils.LogUtils;
 
@@ -31,18 +31,18 @@ public class ReadThead extends Thread {
         int size;
         while (!isInterrupted() && input != null) {
             try {
-                LogUtils.d("读线程---等待读取");
+                LogUtils.d(Config.TAG_SERIAL_PORT, "正在等待读取数据");
                 size = input.read(buffer);
                 if (size > 0) {
                     notifyData(buffer, size);
-                    LogUtils.d("读线程---读取数据---" + ByteUtils.bytes2String(buffer, size));
+                    LogUtils.d(Config.TAG_SERIAL_PORT, "读数据---" + ByteUtils.bytes2String(buffer, size));
                 }
             } catch (Exception e) {
-                LogUtils.d("读线程---异常退出");
+                LogUtils.d(Config.TAG_SERIAL_PORT, "读---异常退出");
                 break;
             }
         }
-        LogUtils.d("读线程---停止");
+        LogUtils.d(Config.TAG_SERIAL_PORT, "读---停止");
         notifyStop();
         close();
 

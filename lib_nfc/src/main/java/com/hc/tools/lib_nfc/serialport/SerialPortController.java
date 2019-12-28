@@ -9,7 +9,11 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
     private SerialPortCore mSerialPortCore;
     private ReadThead mReadThead;
     private WriteThread mWriteThread;
+    private volatile OnSerialPortControllerListener listener;
 
+    public void setOnSerialPortControllerListener(OnSerialPortControllerListener listener) {
+        this.listener = listener;
+    }
 
     public void init() {
         mSerialPortCore = new SerialPortCore();
@@ -29,12 +33,6 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
         mWriteThread.start();
     }
 
-    public SerialPortCore.SerialPortState getState() {
-        if (mSerialPortCore != null) {
-            return mSerialPortCore.getState();
-        }
-        return SerialPortCore.SerialPortState.CLOSE;
-    }
 
     /**
      * 发送指令
@@ -53,6 +51,9 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
      * 释放资源
      */
     public void release() {
+        if (listener != null) {
+            listener = null;
+        }
         if (mSerialPortCore != null) {
             mSerialPortCore.release();
             mSerialPortCore = null;
@@ -74,7 +75,9 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
      */
     @Override
     public void writeData(byte[] data) {
-
+        if (listener != null) {
+            listener.writeData(data);
+        }
     }
 
     /**
@@ -82,7 +85,9 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
      */
     @Override
     public void writeStop() {
-
+        if (listener != null) {
+            listener.writeStop();
+        }
     }
 
     /**
@@ -93,7 +98,9 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
      */
     @Override
     public void onReceiveData(byte[] buffer, int size) {
-
+        if (listener != null) {
+            listener.onReceiveData(buffer, size);
+        }
     }
 
     /**
@@ -101,8 +108,20 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
      */
     @Override
     public void onReadStop() {
-
+        if (listener != null) {
+            listener.onReadStop();
+        }
     }
 
+    public interface OnSerialPortControllerListener {
+        void writeData(byte[] data);
+
+        void onReceiveData(byte[] buffer, int size);
+
+
+        void writeStop();
+
+        void onReadStop();
+    }
 
 }

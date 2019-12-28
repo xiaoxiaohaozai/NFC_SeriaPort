@@ -51,6 +51,19 @@ public class ByteUtils {
         return sb.toString();
     }
 
+
+    public static String bytes2AscllString(byte[] data) {
+        if (data == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < data.length; i++) {
+            sb.append(((char) data[i]));
+        }
+        return sb.toString();
+    }
+
+
     public static byte[] string2Hex(String msg) {
         return msg.getBytes();
     }

@@ -2,7 +2,7 @@ package com.hc.tools.lib_nfc.serialport;
 
 import android.serialport.SerialPort;
 
-import com.hc.tools.lib_nfc.constant.SerialPortConfig;
+import com.hc.tools.lib_nfc.constant.Config;
 import com.hc.tools.lib_nfc.utils.LogUtils;
 
 import java.io.File;
@@ -29,13 +29,13 @@ public class SerialPortCore {
 
     public void initPort() {
         try {
-            mSerialPort = new SerialPort(new File(SerialPortConfig.PATH), SerialPortConfig.BAUDRATE, 0);
+            mSerialPort = new SerialPort(new File(Config.PATH), Config.BAUDRATE, 0);
             state = SerialPortState.OPEN;
-            LogUtils.d("串口打开成功---" + SerialPortConfig.PATH);
+            LogUtils.d(Config.TAG_SERIAL_PORT, "打开成功");
         } catch (IOException e) {
             e.printStackTrace();
             state = SerialPortState.CLOSE;
-            LogUtils.d("串口打开失败---" + SerialPortConfig.PATH);
+            LogUtils.d(Config.TAG_SERIAL_PORT, "打开失败");
         }
     }
 
@@ -58,7 +58,8 @@ public class SerialPortCore {
         if (getInput() != null) {
             try {
                 getInput().close();
-                LogUtils.d("串口输入流关闭");
+                LogUtils.d(Config.TAG_SERIAL_PORT, "关闭输入");
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -70,7 +71,7 @@ public class SerialPortCore {
         if (getOutput() != null) {
             try {
                 getOutput().close();
-                LogUtils.d("串口输出流关闭");
+                LogUtils.d(Config.TAG_SERIAL_PORT, "关闭输出");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -87,7 +88,7 @@ public class SerialPortCore {
         if (mSerialPort != null) {
             mSerialPort.close();
             mSerialPort = null;
-            LogUtils.d("串口关闭");
+            LogUtils.d(Config.TAG_SERIAL_PORT, "关闭");
         }
     }
 

@@ -1,6 +1,11 @@
 package com.hc.tools.lib_nfc.constant;
 
-public class SerialPortConfig {
+public class Config {
+
+    public static final String TAG_SERIAL_PORT= "串口";
+    public static final String TAG_NFC = "NFC";
+    public static final String TAG_NFC_PARSE="解析";
+
     public static final int BAUDRATE = 115200;
     public static final String PATH = "/dev/ttyS1";
 
@@ -16,13 +21,5 @@ public class SerialPortConfig {
     public static final byte[] CMD_BYTES_FIND_CARD_SEND = CMD_FIND_CARD_SEND.getBytes();
     public static final byte[] CMD_BYTES_GET_CARD_NUMBER_SEND = CMD_GET_CARD_NUMBER_SEND.getBytes();
 
-    public static final String FRAME_HEAD = "JSC";
-    public static final int MIN_LENGTH = 11;
-    public static final int LENGTH_FRAME_HEAD = 3;
-    public static final int LENGTH_FRAME_LENGTH = 4;
-    public static final int LENGTH_CMD_CODE = 2;
-    public static final int LENGTH_CMD_CHECK_CODE = 2;
-    public static final int OFFSET_LENGTH = 3;
-    public static final int OFFSET_CMD_CODE = 7;
-    public static final int OFFSET_CMD_DATA = 9;
+
 }

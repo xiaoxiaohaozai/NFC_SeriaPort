@@ -1,5 +1,6 @@
 package com.hc.tools.lib_nfc.serialport;
 
+import com.hc.tools.lib_nfc.constant.Config;
 import com.hc.tools.lib_nfc.utils.ByteUtils;
 import com.hc.tools.lib_nfc.utils.LogUtils;
 
@@ -31,18 +32,19 @@ public class WriteThread extends Thread {
 
         while (!isInterrupted() && output != null && mSendQueues != null) {
             try {
-                LogUtils.d("写线程---等待写入");
+
+                LogUtils.d(Config.TAG_SERIAL_PORT, "正在等待写入数据");
                 byte[] bytes = mSendQueues.take();
                 if (bytes.length > 0) {
                     output.write(bytes);
-                    LogUtils.d("写线程---写入数据---" + ByteUtils.bytes2String(bytes, bytes.length));
+                    LogUtils.d(Config.TAG_SERIAL_PORT, "写入数据---" + ByteUtils.bytes2String(bytes, bytes.length));
                     if (onWriteListener != null) {
                         onWriteListener.writeData(bytes);
                     }
                 }
                 sleep(100);
             } catch (Exception e) {
-                LogUtils.d("写线程---异常退出");
+                LogUtils.d(Config.TAG_SERIAL_PORT, "写---异常退出");
                 break;
             }
         }
@@ -50,7 +52,7 @@ public class WriteThread extends Thread {
             onWriteListener.writeStop();
         }
         close();
-        LogUtils.d("写线程---停止");
+        LogUtils.d(Config.TAG_SERIAL_PORT, "写---停止");
     }
 
     /**
@@ -60,7 +62,7 @@ public class WriteThread extends Thread {
      */
     public void sendCommond(byte[] bytes) {
         if (isAlive() && mSendQueues != null) {
-            if (mSendQueues.size() < DEFAULT_QUEUE_SIZE) {//避免发送端数据满了阻塞发送线程
+            if (mSendQueues.size() < DEFAULT_QUEUE_SIZE - 1) {//避免发送端数据满了阻塞发送线程
                 mSendQueues.add(bytes);
             }
         }

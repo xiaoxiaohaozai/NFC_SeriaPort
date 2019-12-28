@@ -30,17 +30,10 @@ public class NFCManager implements ServiceConnection {
     }
 
     public void init(Context context) {
-        if (context == null) {
-            return;
-        }
-        this.context = context.getApplicationContext();
         NFCService.bindNFCService(context, this);
     }
 
-    public void release() {
-        if (context == null) {
-            return;
-        }
+    public void release(Context context) {
         NFCService.unBindNFCService(context, this);
     }
 
@@ -80,7 +73,7 @@ public class NFCManager implements ServiceConnection {
 
     @Override
     public void onServiceDisconnected(ComponentName componentName) {
-        LogUtils.d("NFC", "子线程服务断开");
+
     }
 
 
