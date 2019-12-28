@@ -85,11 +85,4 @@ public class WriteThread extends Thread {
         }
     }
 
-    public interface OnWriteListener {
-        void writeData(byte[] data);
-
-        void writeStop();
-    }
-
-
 }

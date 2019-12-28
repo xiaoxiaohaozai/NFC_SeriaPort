@@ -72,12 +72,4 @@ public class ReadThead extends Thread {
         }
     }
 
-
-    public interface OnReadListener {
-
-        void onReceiveData(byte[] buffer, int size);
-
-        void onReadStop();
-
-    }
 }

@@ -4,7 +4,7 @@ package com.hc.tools.lib_nfc.serialport;
 /**
  * 串口读写控制类
  */
-public class SerialPortController implements ReadThead.OnReadListener, WriteThread.OnWriteListener {
+public class SerialPortController implements OnReadListener, OnWriteListener {
 
     private SerialPortCore mSerialPortCore;
     private ReadThead mReadThead;
@@ -81,7 +81,7 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
     }
 
     /**
-     * 写停止或错误
+     * 串口写停止或错误
      */
     @Override
     public void writeStop() {
@@ -104,7 +104,7 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
     }
 
     /**
-     * 读停止或错误
+     * 串口读停止或错误
      */
     @Override
     public void onReadStop() {
@@ -113,15 +113,5 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
         }
     }
 
-    public interface OnSerialPortControllerListener {
-        void writeData(byte[] data);
-
-        void onReceiveData(byte[] buffer, int size);
-
-
-        void writeStop();
-
-        void onReadStop();
-    }
 
 }

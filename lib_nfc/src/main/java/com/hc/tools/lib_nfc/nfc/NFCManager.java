@@ -7,16 +7,21 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
 
-import com.hc.tools.lib_nfc.aidl.INFCFunction;
+import com.hc.tools.lib_nfc.INFCServiceFunction;
+import com.hc.tools.lib_nfc.INFCServiceListener;
 import com.hc.tools.lib_nfc.utils.LogUtils;
 
-
+/**
+ * 支持自动读卡
+ * 暂不支持手动干预
+ * 子进程
+ */
 public class NFCManager implements ServiceConnection {
 
     @SuppressLint("StaticFieldLeak")
     private static volatile NFCManager instance;
-    private INFCFunction mNfcFunction;
-    private Context context;
+    private INFCServiceFunction mNfcServiceFunction;
+
 
     public static NFCManager get() {
         if (instance == null) {
@@ -34,16 +39,27 @@ public class NFCManager implements ServiceConnection {
     }
 
     public void release(Context context) {
+        if (isAlive()) {
+            try {
+                mNfcServiceFunction.unregisterNFCServiceListener(nfcServiceCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
         NFCService.unBindNFCService(context, this);
+    }
+
+    private boolean isAlive() {
+        return mNfcServiceFunction != null && mNfcServiceFunction.asBinder().isBinderAlive();
     }
 
     /**
      * 开始寻卡
      */
     public void openFindCard() {
-        if (mNfcFunction != null) {
+        if (isAlive()) {
             try {
-                mNfcFunction.openFindCard();
+                mNfcServiceFunction.openFindCard();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -54,9 +70,35 @@ public class NFCManager implements ServiceConnection {
      * 结束寻卡
      */
     public void stopFindCard() {
-        if (mNfcFunction != null) {
+        if (isAlive()) {
             try {
-                mNfcFunction.stopFindCard();
+                mNfcServiceFunction.stopFindCard();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 开始获取号码
+     */
+    public void openFindCardNumber() {
+        if (isAlive()) {
+            try {
+                mNfcServiceFunction.openFindCardNumber();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 停止获取号码
+     */
+    public void stopFindCardNumber() {
+        if (isAlive()) {
+            try {
+                mNfcServiceFunction.stopFindCardNumber();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -66,14 +108,33 @@ public class NFCManager implements ServiceConnection {
 
     @Override
     public void onServiceConnected(ComponentName componentName, IBinder service) {
-        LogUtils.d("NFC", "子线程服务连接");
-        mNfcFunction = INFCFunction.Stub.asInterface(service);
-
+        mNfcServiceFunction = INFCServiceFunction.Stub.asInterface(service);
+        try {
+            mNfcServiceFunction.registerNFCServiceListener(nfcServiceCallback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
+
+    /**
+     * 注意回调不在主线程
+     */
+    private INFCServiceListener nfcServiceCallback = new INFCServiceListener.Stub() {
+        @Override
+        public void hasCard(boolean hasCard) throws RemoteException {
+          LogUtils.d("NFCManager",Thread.currentThread().getName()+ (hasCard ? "有卡" : "无卡"));
+
+        }
+
+        @Override
+        public void getNumber(String number) throws RemoteException {
+            LogUtils.d("NFCManager", "卡号---" + number);
+        }
+    };
 
     @Override
     public void onServiceDisconnected(ComponentName componentName) {
-
+        mNfcServiceFunction = null;
     }
 
 

@@ -8,28 +8,35 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 
-import com.hc.tools.lib_nfc.aidl.INFCFunction;
+import com.hc.tools.lib_nfc.INFCServiceFunction;
+import com.hc.tools.lib_nfc.INFCServiceListener;
 import com.hc.tools.lib_nfc.constant.Config;
+import com.hc.tools.lib_nfc.serialport.OnSerialPortControllerListener;
 import com.hc.tools.lib_nfc.serialport.SerialPortController;
 import com.hc.tools.lib_nfc.utils.LogUtils;
+
+import static com.hc.tools.lib_nfc.constant.Config.GET_NUMBER;
+import static com.hc.tools.lib_nfc.constant.Config.HAS_CARD;
+import static com.hc.tools.lib_nfc.constant.Config.MSG_FIND_CARD;
+import static com.hc.tools.lib_nfc.constant.Config.MSG_FIND_CARD_NUMBER;
+import static com.hc.tools.lib_nfc.constant.Config.NO_CARD;
 
 
 /**
  * NFC服务
  */
-public class NFCService extends Service implements Handler.Callback, SerialPortController.OnSerialPortControllerListener, NFCParse.OnNFCParseListener {
+public class NFCService extends Service implements Handler.Callback, OnNFCParseListener, OnSerialPortControllerListener {
 
     private SerialPortController mSerialPortController;
     private HandlerThread mSendThread;
     private Handler mSendHandler;
 
-    public static final int MSG_FIND_CARD = 0x01;
-    public static final int MSG_FIND_CARD_NUMBER = 0x02;
-    public static final int MSG_RESULT = 0x03;
-    private NFCParse mNFCParse;
 
+    private NFCParse mNFCParse;
+    private RemoteCallbackList<INFCServiceListener> remoteCallbackList = new RemoteCallbackList<>();
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -37,20 +44,21 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
     }
 
     /**
-     * 绑定服务
+     * 绑定NFC服务
      *
      * @param context
      * @param serviceConnection
      */
     public static void bindNFCService(Context context, ServiceConnection serviceConnection) {
         if (context != null) {
-            Intent intent = new Intent(context, NFCService.class);
+            Intent intent = new Intent("com.hc.tools.lib_nfc.nfc.NFCService");
+            intent.setPackage(context.getPackageName());
             context.bindService(intent, serviceConnection, Service.BIND_AUTO_CREATE);
         }
     }
 
     /**
-     * 解绑服务
+     * 解绑NFC服务
      *
      * @param context
      * @param serviceConnection
@@ -63,13 +71,11 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
 
     @Override
     public void writeData(byte[] data) {
-        //LogUtils.d(Config.TAG_NFC, "写入数据---" + ByteUtils.bytes2AscllString(data));
 
     }
 
     @Override
     public void onReceiveData(byte[] buffer, int size) {
-        //  LogUtils.d(Config.TAG_NFC, "读取数据---" + ByteUtils.bytes2AscllString(buffer, size));
         if (mNFCParse != null) {
             mNFCParse.parse(buffer, size);
         }
@@ -86,40 +92,102 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
     }
 
     /**
-     * 有卡
+     * 通知主进程
+     *
+     * @param type
+     * @param data
      */
-    @Override
-    public void hasCard() {
-        LogUtils.d(Config.TAG_NFC, "有卡");
-        openGetNumber();
+    private void notifyData(int type, String data) {
+        int size = remoteCallbackList.beginBroadcast();
+        if (remoteCallbackList != null && size > 0) {
+            for (int i = 0; i < size; i++) {
+                try {
+                    INFCServiceListener broadcastItem = remoteCallbackList.getBroadcastItem(i);
+                    switch (type) {
+                        case HAS_CARD:
+                            broadcastItem.hasCard(true);
+                            break;
+                        case NO_CARD:
+                            broadcastItem.hasCard(false);
+                            break;
+                        case GET_NUMBER:
+                            broadcastItem.getNumber(data);
+                            break;
+                    }
+                } catch (Exception e) {
+
+                }
+            }
+            remoteCallbackList.finishBroadcast();
+        }
     }
 
-    /**
-     * 无卡
-     */
+
     @Override
-    public void noCard() {
-        LogUtils.d(Config.TAG_NFC, "无卡");
+    public void hasCard(boolean hasCard) {
+        if (hasCard) {
+            //LogUtils.d(Config.TAG_NFC, "有卡");
+            notifyData(HAS_CARD, null);
+            openGetNumber();
+        } else {
+            // LogUtils.d(Config.TAG_NFC, "无卡");
+            notifyData(NO_CARD, null);
+            closeGetNumber();
+        }
+    }
+
+    @Override
+    public void getCardNumber(String number) {
+        // LogUtils.d(Config.TAG_NFC, "卡号" + number);
+        notifyData(GET_NUMBER, number);
         closeGetNumber();
     }
 
-    @Override
-    public void cardNumber(String number) {
-        LogUtils.d(Config.TAG_NFC, "卡号" + number);
-        closeGetNumber();
-    }
-
-    public class NFCBinder extends INFCFunction.Stub {
+    public class NFCBinder extends INFCServiceFunction.Stub {
         @Override
         public void openFindCard() throws RemoteException {
-            LogUtils.d(Config.TAG_NFC, "开启寻卡");
             NFCService.this.openFindCard();
         }
 
         @Override
         public void stopFindCard() throws RemoteException {
-            LogUtils.d(Config.TAG_NFC, "停止寻卡");
             NFCService.this.closeFindCard();
+        }
+
+        @Override
+        public void openFindCardNumber() throws RemoteException {
+            NFCService.this.openGetNumber();
+        }
+
+        @Override
+        public void stopFindCardNumber() throws RemoteException {
+            NFCService.this.closeGetNumber();
+        }
+
+        /**
+         * 注册监听
+         *
+         * @param listener
+         * @throws RemoteException
+         */
+        @Override
+        public void registerNFCServiceListener(INFCServiceListener listener) throws RemoteException {
+            if (listener != null) {
+                remoteCallbackList.register(listener);
+            }
+        }
+
+        /**
+         * 取消监听
+         *
+         * @param listener
+         * @throws RemoteException
+         */
+        @Override
+        public void unregisterNFCServiceListener(INFCServiceListener listener) throws RemoteException {
+            if (listener != null) {
+                remoteCallbackList.unregister(listener);
+            }
         }
     }
 
@@ -132,22 +200,24 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
     }
 
     private void init() {
+        LogUtils.enable(false);
+        //串口控制
         mSerialPortController = new SerialPortController();
         mSerialPortController.setOnSerialPortControllerListener(this);
         mSerialPortController.init();
-
 
         //控制指令发送
         mSendThread = new HandlerThread("SEND_THREAD");
         mSendThread.start();
         mSendHandler = new Handler(mSendThread.getLooper(), this);
 
-        //nfc指令解析
+        //NFC指令解析
         mNFCParse = new NFCParse();
         mNFCParse.setParseListener(this);
     }
 
     private void release() {
+        remoteCallbackList.kill();
         closeSendThread();
         if (mSerialPortController != null) {
             mSerialPortController.release();
@@ -163,7 +233,6 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
         release();
         LogUtils.d(Config.TAG_NFC, "NFC服务销毁");
         super.onDestroy();
-
     }
 
     private void closeSendThread() {
@@ -178,10 +247,8 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
     }
 
 
-    /**
-     * 开始寻卡
-     */
     private void openFindCard() {
+        LogUtils.d(Config.TAG_NFC, "开启寻卡");
         closeFindCard();
         closeGetNumber();
         if (mSendHandler != null) {
@@ -189,27 +256,20 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
         }
     }
 
-    /**
-     * 结束寻卡
-     */
     private void closeFindCard() {
+        LogUtils.d(Config.TAG_NFC, "停止寻卡");
         if (mSendHandler != null) {
             mSendHandler.removeMessages(MSG_FIND_CARD);
         }
     }
 
-    /**
-     * 开始获取卡号
-     */
     private void openGetNumber() {
         if (mSendHandler != null) {
             mSendHandler.sendEmptyMessage(MSG_FIND_CARD_NUMBER);
         }
     }
 
-    /**
-     * 停止获取卡号
-     */
+
     private void closeGetNumber() {
         if (mSendHandler != null) {
             mSendHandler.removeMessages(MSG_FIND_CARD_NUMBER);
@@ -223,15 +283,8 @@ public class NFCService extends Service implements Handler.Callback, SerialPortC
         }
     }
 
-    /**
-     * 处理消息
-     *
-     * @param message
-     * @return
-     */
     @Override
     public boolean handleMessage(Message message) {
-
         switch (message.what) {
             case MSG_FIND_CARD://寻卡指令
                 repeat(MSG_FIND_CARD, Config.CMD_BYTES_FIND_CARD_SEND, 300);

@@ -8,7 +8,13 @@ import com.hc.tools.lib_nfc.utils.RegUtils;
 
 import static com.hc.tools.lib_nfc.constant.Config.CMD_FIND_CARD_RESPONSE_FAIL;
 import static com.hc.tools.lib_nfc.constant.Config.CMD_FIND_CARD_RESPONSE_SUCCESS;
-import static com.hc.tools.lib_nfc.constant.Config.CMD_GET_CARD_NUMBER_SEND;
+import static com.hc.tools.lib_nfc.constant.Config.FRAME_HEAD;
+import static com.hc.tools.lib_nfc.constant.Config.LENGTH_FRAME_HEAD;
+import static com.hc.tools.lib_nfc.constant.Config.LENGTH_FRAME_LENGTH;
+import static com.hc.tools.lib_nfc.constant.Config.MIN_LENGTH;
+import static com.hc.tools.lib_nfc.constant.Config.OFFSET_CMD_CODE;
+import static com.hc.tools.lib_nfc.constant.Config.OFFSET_CMD_DATA;
+import static com.hc.tools.lib_nfc.constant.Config.OFFSET_LENGTH;
 import static com.hc.tools.lib_nfc.constant.Config.TAG_NFC_PARSE;
 
 /**
@@ -20,16 +26,9 @@ import static com.hc.tools.lib_nfc.constant.Config.TAG_NFC_PARSE;
  */
 public class NFCParse {
 
-    public static final String FRAME_HEAD = "JSC";
-    public static final int MIN_LENGTH = 11;
-    public static final int LENGTH_FRAME_HEAD = 3;
-    public static final int LENGTH_FRAME_LENGTH = 4;
-    public static final int OFFSET_LENGTH = 3;
-    public static final int OFFSET_CMD_CODE = 7;
-    public static final int OFFSET_CMD_DATA = 9;
+
 
     private StringBuilder mResult = new StringBuilder();
-
 
     private boolean mHasFoundHead;
 
@@ -59,7 +58,6 @@ public class NFCParse {
         if (mResult.length() < MIN_LENGTH) {
             return;
         }
-        //LogUtils.d(TAG_NFC_PARSE, "数据帧---待解析数据---" + mResult);
         //找到帧头
         if (!mHasFoundHead) {
             findHead();
@@ -102,7 +100,8 @@ public class NFCParse {
                 reset(frameLength);
                 return;
             }
-            reset(frameLength);//删除这一帧
+            //删除该帧
+            reset(frameLength);
             sort(target);
         }
     }
@@ -116,18 +115,18 @@ public class NFCParse {
         switch (target) {
             case CMD_FIND_CARD_RESPONSE_SUCCESS://有卡
                 if (parseListener != null) {
-                    parseListener.hasCard();
+                    parseListener.hasCard(true);
                 }
                 break;
             case CMD_FIND_CARD_RESPONSE_FAIL://无卡
                 if (parseListener != null) {
-                    parseListener.noCard();
+                    parseListener.hasCard(false);
                 }
                 break;
             default:
                 if (parseListener != null) {
                     if (!TextUtils.isEmpty(target) && target.length() > MIN_LENGTH) {
-                        parseListener.cardNumber(target.substring(OFFSET_CMD_DATA, target.length() - 2));
+                        parseListener.getCardNumber(target.substring(OFFSET_CMD_DATA, target.length() - 2));
                     }
                 }
                 break;
@@ -168,11 +167,4 @@ public class NFCParse {
 
     }
 
-    public interface OnNFCParseListener {
-        void hasCard();
-
-        void noCard();
-
-        void cardNumber(String number);
-    }
 }
