@@ -1,9 +1,8 @@
-package com.hc.tools.lib_nfc.thread;
+package com.hc.tools.lib_nfc.serialport;
 
 import com.hc.tools.lib_nfc.utils.ByteUtils;
 import com.hc.tools.lib_nfc.utils.LogUtils;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -13,8 +12,8 @@ import java.util.concurrent.BlockingQueue;
  */
 public class WriteThread extends Thread {
     private static final int DEFAULT_QUEUE_SIZE = 30;
-    private  OutputStream output;
-    private  BlockingQueue<byte[]> mSendQueues;//指令队列
+    private volatile OutputStream output;
+    private BlockingQueue<byte[]> mSendQueues;//指令队列
 
     private OnWriteListener onWriteListener;
 
@@ -29,20 +28,21 @@ public class WriteThread extends Thread {
 
     @Override
     public void run() {
-        LogUtils.d("写线程---等待写入");
+
         while (!isInterrupted() && output != null && mSendQueues != null) {
             try {
+                LogUtils.d("写线程---等待写入");
                 byte[] bytes = mSendQueues.take();
                 if (bytes.length > 0) {
                     output.write(bytes);
-                    LogUtils.d("写线程---写入: " + ByteUtils.bytes2String(bytes));
+                    LogUtils.d("写线程---写入数据---" + ByteUtils.bytes2String(bytes, bytes.length));
                     if (onWriteListener != null) {
                         onWriteListener.writeData(bytes);
                     }
                 }
                 sleep(100);
             } catch (Exception e) {
-                e.printStackTrace();
+                LogUtils.d("写线程---异常退出");
                 break;
             }
         }
@@ -60,7 +60,7 @@ public class WriteThread extends Thread {
      */
     public void sendCommond(byte[] bytes) {
         if (isAlive() && mSendQueues != null) {
-            if (mSendQueues.size() < DEFAULT_QUEUE_SIZE) {
+            if (mSendQueues.size() < DEFAULT_QUEUE_SIZE) {//避免发送端数据满了阻塞发送线程
                 mSendQueues.add(bytes);
             }
         }
@@ -68,19 +68,14 @@ public class WriteThread extends Thread {
 
 
     public void close() {
+        if (!isInterrupted()) {
+            interrupt();
+        }
         if (mSendQueues != null) {
             mSendQueues.clear();
             mSendQueues = null;
         }
-        if (!isInterrupted()) {
-            interrupt();
-        }
         if (output != null) {
-            try {
-                output.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             output = null;
         }
         if (onWriteListener != null) {

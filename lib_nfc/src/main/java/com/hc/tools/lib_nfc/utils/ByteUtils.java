@@ -40,6 +40,17 @@ public class ByteUtils {
         return sb.toString();
     }
 
+    public static String bytes2AscllString(byte[] data, int length) {
+        if (data == null || length == 0 || length > data.length) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            sb.append(((char) data[i]));
+        }
+        return sb.toString();
+    }
+
     public static byte[] string2Hex(String msg) {
         return msg.getBytes();
     }

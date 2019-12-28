@@ -1,9 +1,6 @@
 package com.hc.tools.lib_nfc.serialport;
 
 
-import com.hc.tools.lib_nfc.thread.ReadThead;
-import com.hc.tools.lib_nfc.thread.WriteThread;
-
 /**
  * 串口读写控制类
  */
@@ -13,14 +10,6 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
     private ReadThead mReadThead;
     private WriteThread mWriteThread;
 
-
-    private static class Holder {
-        private static final SerialPortController INSTANCE = new SerialPortController();
-    }
-
-    public static SerialPortController getInstance() {
-        return Holder.INSTANCE;
-    }
 
     public void init() {
         mSerialPortCore = new SerialPortCore();
@@ -53,8 +42,10 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
      * @param data
      */
     public void sendCommond(byte[] data) {
-        if (mWriteThread != null) {
-            mWriteThread.sendCommond(data);
+        if (mSerialPortCore.getState() == SerialPortCore.SerialPortState.OPEN) {
+            if (mWriteThread != null && mWriteThread.isAlive()) {
+                mWriteThread.sendCommond(data);
+            }
         }
     }
 
@@ -62,6 +53,10 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
      * 释放资源
      */
     public void release() {
+        if (mSerialPortCore != null) {
+            mSerialPortCore.release();
+            mSerialPortCore = null;
+        }
         if (mReadThead != null) {
             mReadThead.close();
             mReadThead = null;
@@ -70,10 +65,6 @@ public class SerialPortController implements ReadThead.OnReadListener, WriteThre
             mWriteThread.close();
             mWriteThread = null;
         }
-//        if (mSerialPortCore != null) {
-//            mSerialPortCore.release();
-//            mSerialPortCore = null;
-//        }
     }
 
     /**

@@ -1,10 +1,11 @@
-package com.hc.tools.lib_nfc.thread;
+package com.hc.tools.lib_nfc.serialport;
+
 
 
 import com.hc.tools.lib_nfc.utils.ByteUtils;
 import com.hc.tools.lib_nfc.utils.LogUtils;
 
-import java.io.IOException;
+
 import java.io.InputStream;
 
 /**
@@ -12,8 +13,8 @@ import java.io.InputStream;
  */
 public class ReadThead extends Thread {
 
-    private  InputStream input;
-    private OnReadListener readListener;
+    private volatile InputStream input;
+    private volatile OnReadListener readListener;
 
     public ReadThead(InputStream input) {
         this.input = input;
@@ -34,10 +35,10 @@ public class ReadThead extends Thread {
                 size = input.read(buffer);
                 if (size > 0) {
                     notifyData(buffer, size);
-                    LogUtils.d("读线程---读取:---" + ByteUtils.bytes2String(buffer, size));
+                    LogUtils.d("读线程---读取数据---" + ByteUtils.bytes2String(buffer, size));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LogUtils.d("读线程---异常退出");
                 break;
             }
         }
@@ -67,11 +68,6 @@ public class ReadThead extends Thread {
             readListener = null;
         }
         if (input != null) {
-            try {
-                input.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             input = null;
         }
     }
