@@ -8,9 +8,6 @@ import com.hc.tools.lib_nfc.utils.LogUtils;
 
 import java.io.InputStream;
 
-/**
- * 读取线程
- */
 public class ReadThead extends Thread {
 
     private volatile InputStream input;

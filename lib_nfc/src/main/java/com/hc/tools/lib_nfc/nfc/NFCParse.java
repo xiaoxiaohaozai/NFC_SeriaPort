@@ -17,12 +17,15 @@ import static com.hc.tools.lib_nfc.constant.Config.OFFSET_CMD_DATA;
 import static com.hc.tools.lib_nfc.constant.Config.OFFSET_LENGTH;
 import static com.hc.tools.lib_nfc.constant.Config.TAG_NFC_PARSE;
 
+
 /**
- * nfc 数据解析
- * <p>
- * // JSC 0004 00 00
- * // JSC 000C 00 97A4886E D5
- * // xx xxx  0x30 0x30 0x30 0x43
+ * 作者: chenhao
+ * 创建日期: 2019-12-29
+ * 描述:
+ * NFC 数据解析
+ * JSC 0004 00 00
+ * JSC 000C 00 97A4886E D5
+ * xx xxx  0x30 0x30 0x30 0x43
  */
 public class NFCParse {
 

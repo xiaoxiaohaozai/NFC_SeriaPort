@@ -2,8 +2,11 @@ package com.hc.tools.lib_nfc.serialport;
 
 
 /**
- * 串口读写控制类
- */
+ * 作者: chenhao
+ * 创建日期: 2019-12-29
+ * 描述:
+ * 串口控制类
+*/
 public class SerialPortController implements OnReadListener, OnWriteListener {
 
     private SerialPortCore mSerialPortCore;
