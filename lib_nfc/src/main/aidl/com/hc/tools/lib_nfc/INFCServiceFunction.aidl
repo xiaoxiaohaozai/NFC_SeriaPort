@@ -12,7 +12,11 @@ interface INFCServiceFunction {
    void openFindCardNumber();
    void stopFindCardNumber();
 
+   void setAutoGetNumber(boolean autoGetNumber) ;
+
    void registerNFCServiceListener(INFCServiceListener listener);
    void unregisterNFCServiceListener(INFCServiceListener listener);
+
+   void showLog(boolean show);
 
 }

@@ -59,12 +59,10 @@ public class SerialPortCore {
             try {
                 getInput().close();
                 LogUtils.d(Config.TAG_SERIAL_PORT, "关闭输入");
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
     }
 
     public void closeOutput() {

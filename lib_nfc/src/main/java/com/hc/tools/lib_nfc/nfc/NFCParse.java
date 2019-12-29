@@ -27,7 +27,6 @@ import static com.hc.tools.lib_nfc.constant.Config.TAG_NFC_PARSE;
 public class NFCParse {
 
 
-
     private StringBuilder mResult = new StringBuilder();
 
     private boolean mHasFoundHead;
@@ -112,24 +111,20 @@ public class NFCParse {
      * @param target
      */
     private void sort(String target) {
-        switch (target) {
-            case CMD_FIND_CARD_RESPONSE_SUCCESS://有卡
-                if (parseListener != null) {
-                    parseListener.hasCard(true);
+        if (TextUtils.equals(CMD_FIND_CARD_RESPONSE_SUCCESS, target)) {
+            if (parseListener != null) {
+                parseListener.hasCard(true);
+            }
+        } else if (TextUtils.equals(CMD_FIND_CARD_RESPONSE_FAIL, target)) {
+            if (parseListener != null) {
+                parseListener.hasCard(false);
+            }
+        } else {
+            if (parseListener != null) {
+                if (!TextUtils.isEmpty(target) && target.length() > MIN_LENGTH) {
+                    parseListener.getCardNumber(target.substring(OFFSET_CMD_DATA, target.length() - 2));
                 }
-                break;
-            case CMD_FIND_CARD_RESPONSE_FAIL://无卡
-                if (parseListener != null) {
-                    parseListener.hasCard(false);
-                }
-                break;
-            default:
-                if (parseListener != null) {
-                    if (!TextUtils.isEmpty(target) && target.length() > MIN_LENGTH) {
-                        parseListener.getCardNumber(target.substring(OFFSET_CMD_DATA, target.length() - 2));
-                    }
-                }
-                break;
+            }
         }
     }
 
@@ -160,11 +155,8 @@ public class NFCParse {
     }
 
     public void release() {
-        if (parseListener != null) {
-            parseListener = null;
-        }
         mHasFoundHead = false;
-
+        mResult.delete(0, mResult.length());
     }
 
 }

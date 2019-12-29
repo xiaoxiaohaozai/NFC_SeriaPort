@@ -23,6 +23,7 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
         }
     }
 
+
     private void initThread() {
         mReadThead = new ReadThead(mSerialPortCore.getInput());
         mReadThead.setReadListener(this);
@@ -41,31 +42,35 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
      */
     public void sendCommond(byte[] data) {
         if (mSerialPortCore.getState() == SerialPortCore.SerialPortState.OPEN) {
-            if (mWriteThread != null && mWriteThread.isAlive()) {
+            if (mWriteThread != null && !mWriteThread.isInterrupted()) {
                 mWriteThread.sendCommond(data);
             }
         }
     }
 
-    /**
-     * 释放资源
-     */
-    public void release() {
-        if (listener != null) {
-            listener = null;
-        }
-        if (mSerialPortCore != null) {
-            mSerialPortCore.release();
-            mSerialPortCore = null;
-        }
+    public void releaseThread() {
         if (mReadThead != null) {
+            mReadThead.setReadListener(null);
             mReadThead.close();
             mReadThead = null;
         }
         if (mWriteThread != null) {
+            mWriteThread.setOnWriteListener(null);
             mWriteThread.close();
             mWriteThread = null;
         }
+    }
+
+    private void releaseSerialPortCore() {
+        if (mSerialPortCore != null) {
+            mSerialPortCore.release();
+            mSerialPortCore = null;
+        }
+    }
+
+    public void release() {
+        releaseSerialPortCore();
+        releaseThread();
     }
 
     /**
@@ -76,18 +81,14 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
     @Override
     public void writeData(byte[] data) {
         if (listener != null) {
-            listener.writeData(data);
+            listener.onWriteData(data);
         }
     }
 
-    /**
-     * 串口写停止或错误
-     */
+
     @Override
     public void writeStop() {
-        if (listener != null) {
-            listener.writeStop();
-        }
+
     }
 
     /**
@@ -103,15 +104,9 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
         }
     }
 
-    /**
-     * 串口读停止或错误
-     */
+
     @Override
     public void onReadStop() {
-        if (listener != null) {
-            listener.onReadStop();
-        }
+
     }
-
-
 }

@@ -2,9 +2,9 @@ package com.hc.tools.lib_nfc.constant;
 
 public class Config {
 
-    public static final String TAG_SERIAL_PORT = "串口";
-    public static final String TAG_NFC = "NFC";
-    public static final String TAG_NFC_PARSE = "解析";
+    public static final String TAG_SERIAL_PORT = "串口通信";
+    public static final String TAG_NFC = "NFC服务";
+    public static final String TAG_NFC_PARSE = "NFC服务---数据解析";
 
     public static final int BAUDRATE = 115200;
     public static final String PATH = "/dev/ttyS1";

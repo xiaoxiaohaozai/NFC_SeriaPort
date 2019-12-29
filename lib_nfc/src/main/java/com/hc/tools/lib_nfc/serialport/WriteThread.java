@@ -29,7 +29,6 @@ public class WriteThread extends Thread {
 
     @Override
     public void run() {
-
         while (!isInterrupted() && output != null && mSendQueues != null) {
             try {
 
@@ -79,9 +78,6 @@ public class WriteThread extends Thread {
         }
         if (output != null) {
             output = null;
-        }
-        if (onWriteListener != null) {
-            onWriteListener = null;
         }
     }
 

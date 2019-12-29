@@ -26,7 +26,6 @@ public class ReadThead extends Thread {
 
     @Override
     public void run() {
-
         byte[] buffer = new byte[128];
         int size;
         while (!isInterrupted() && input != null) {
@@ -45,7 +44,6 @@ public class ReadThead extends Thread {
         LogUtils.d(Config.TAG_SERIAL_PORT, "读---停止");
         notifyStop();
         close();
-
     }
 
     private void notifyData(byte[] buffer, int size) {
@@ -63,9 +61,6 @@ public class ReadThead extends Thread {
     public void close() {
         if (!isInterrupted()) {
             interrupt();
-        }
-        if (readListener != null) {
-            readListener = null;
         }
         if (input != null) {
             input = null;
