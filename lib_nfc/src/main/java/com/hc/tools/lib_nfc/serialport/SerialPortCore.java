@@ -11,8 +11,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * 作者: chenhao
+ * 创建日期: 2019-12-29
+ * 描述:
  * 串口核心
- */
+*/
 public class SerialPortCore {
 
 

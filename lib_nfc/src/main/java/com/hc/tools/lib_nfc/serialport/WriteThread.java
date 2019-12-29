@@ -9,8 +9,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * 写入线程
- */
+ * 作者: chenhao
+ * 创建日期: 2019-12-29
+ * 描述:
+ * 阻塞发送指令
+*/
 public class WriteThread extends Thread {
     private static final int DEFAULT_QUEUE_SIZE = 30;
     private volatile OutputStream output;

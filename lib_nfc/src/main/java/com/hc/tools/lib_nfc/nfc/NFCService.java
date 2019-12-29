@@ -26,7 +26,9 @@ import static com.hc.tools.lib_nfc.constant.Config.NO_CARD;
 
 
 /**
- * NFC服务
+ * 作者: chenhao
+ * 创建日期: 2019-12-29
+ * 描述: NFC核心服务,子进程
  */
 public class NFCService extends Service implements Handler.Callback, OnNFCParseListener, OnSerialPortControllerListener {
 

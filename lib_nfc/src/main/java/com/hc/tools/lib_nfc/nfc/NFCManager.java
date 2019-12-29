@@ -11,10 +11,15 @@ import com.hc.tools.lib_nfc.INFCServiceFunction;
 import com.hc.tools.lib_nfc.INFCServiceListener;
 import com.hc.tools.lib_nfc.utils.LogUtils;
 
+
 /**
- * 支持自动读卡
- * 暂不支持手动干预
- * 子进程
+ * 作者: chenhao
+ * 创建日期: 2019-12-29
+ * 描述:
+ * NFC 管理类
+ * 1.支持自动读卡
+ * 2.监听有卡或无卡状态
+ * 3.监听卡号获取
  */
 public class NFCManager implements ServiceConnection {
 
@@ -174,9 +179,8 @@ public class NFCManager implements ServiceConnection {
         mNfcServiceFunction = null;
     }
 
-    /**
-     * 注意回调不在主线程
-     */
+
+    //TODO 注意回调不在主线程
     private INFCServiceListener nfcServiceCallback = new INFCServiceListener.Stub() {
         @Override
         public void hasCard(boolean hasCard) throws RemoteException {

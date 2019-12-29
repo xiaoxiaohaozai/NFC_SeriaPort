@@ -12,6 +12,12 @@ import android.widget.TextView;
 import com.hc.tools.lib_nfc.nfc.NFCManager;
 import com.hc.tools.lib_nfc.nfc.OnNFCManagerListener;
 
+/**
+ * 作者: chenhao
+ * 创建日期: 2019-12-29
+ * 描述:
+ * sdk基本使用方式
+ */
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button bt_1;
@@ -61,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.bt_1:
-                NFCManager.get().init(this);
+                NFCManager.get().init(this).setAutoGetNumber(false);
                 NFCManager.get().setNfcManagerListener(new OnNFCManagerListener() {
                     @Override
                     public void hasCard(boolean hasCard) {
