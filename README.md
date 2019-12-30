@@ -1,5 +1,8 @@
 # NFC读卡器
 主要用于串口NFC读取卡片信息(非接触式 IC卡)
+## 效果展示
+## 效果展示
+<video src="image/show.mp4" controls="controls" width="800" height="80%">您的浏览器不支持播放该视频！</video>
 
 ## 读卡原理
 <p align="center">
