@@ -15,9 +15,8 @@ import java.io.OutputStream;
  * 创建日期: 2019-12-29
  * 描述:
  * 串口核心
-*/
+ */
 public class SerialPortCore {
-
 
     public enum SerialPortState {
         OPEN, CLOSE

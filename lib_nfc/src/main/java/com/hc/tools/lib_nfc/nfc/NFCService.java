@@ -11,6 +11,7 @@ import android.os.Message;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 
+import com.hc.tools.lib_nfc.INFCErrorListener;
 import com.hc.tools.lib_nfc.INFCServiceFunction;
 import com.hc.tools.lib_nfc.INFCServiceListener;
 import com.hc.tools.lib_nfc.constant.Config;
@@ -37,7 +38,9 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
     private Handler mSendHandler;
     private NFCParse mNFCParse;
     //远程回调
-    private RemoteCallbackList<INFCServiceListener> remoteCallbackList = new RemoteCallbackList<>();
+    private RemoteCallbackList<INFCServiceListener> serviceListenerRemoteCallbackList = new RemoteCallbackList<>();
+    private RemoteCallbackList<INFCErrorListener> errorListenerRemoteCallbackList = new RemoteCallbackList<>();
+
     //感应到卡后是否自动查询号码
     private volatile boolean isAutoGetNumber = true;
     //是否显示日志
@@ -57,10 +60,22 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        init();
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
         return new NFCBinder();
     }
 
+    @Override
+    public boolean onUnbind(Intent intent) {
+        LogUtils.d(Config.TAG_NFC, "NFC服务解绑");
+        release();
+        return super.onUnbind(intent);
+    }
 
     /**
      * 绑定NFC服务
@@ -106,6 +121,11 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
         }
     }
 
+    @Override
+    public void onSerialPortError(int code) {
+        notifyError(code);
+    }
+
     /**
      * 是否显示日志
      *
@@ -131,17 +151,42 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
         closeGetNumber();
     }
 
+
     /**
-     * 通知主进程
+     * 回调错误
+     *
+     * @param errorCode
+     */
+    private void notifyError(int errorCode) {
+        if (errorListenerRemoteCallbackList == null) {
+            return;
+        }
+        int size = errorListenerRemoteCallbackList.beginBroadcast();
+        for (int i = 0; i < size; i++) {
+            try {
+                INFCErrorListener broadcastItem = errorListenerRemoteCallbackList.getBroadcastItem(i);
+                broadcastItem.onNFCError(errorCode);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        errorListenerRemoteCallbackList.finishBroadcast();
+    }
+
+    /**
+     * 回调结果
      *
      * @param type
      * @param data
      */
     private void notifyData(int type, String data) {
-        int size = remoteCallbackList.beginBroadcast();
+        if (serviceListenerRemoteCallbackList == null) {
+            return;
+        }
+        int size = serviceListenerRemoteCallbackList.beginBroadcast();
         for (int i = 0; i < size; i++) {
             try {
-                INFCServiceListener broadcastItem = remoteCallbackList.getBroadcastItem(i);
+                INFCServiceListener broadcastItem = serviceListenerRemoteCallbackList.getBroadcastItem(i);
                 switch (type) {
                     case HAS_CARD:
                         broadcastItem.hasCard(true);
@@ -154,10 +199,10 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
                         break;
                 }
             } catch (Exception e) {
-
+                e.printStackTrace();
             }
         }
-        remoteCallbackList.finishBroadcast();
+        serviceListenerRemoteCallbackList.finishBroadcast();
     }
 
 
@@ -198,29 +243,32 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
             NFCService.this.setAutoGetNumber(autoGetNumber);
         }
 
-        /**
-         * 注册监听
-         *
-         * @param listener
-         * @throws RemoteException
-         */
+
         @Override
         public void registerNFCServiceListener(INFCServiceListener listener) throws RemoteException {
             if (listener != null) {
-                remoteCallbackList.register(listener);
+                serviceListenerRemoteCallbackList.register(listener);
             }
         }
 
-        /**
-         * 取消监听
-         *
-         * @param listener
-         * @throws RemoteException
-         */
         @Override
         public void unregisterNFCServiceListener(INFCServiceListener listener) throws RemoteException {
             if (listener != null) {
-                remoteCallbackList.unregister(listener);
+                serviceListenerRemoteCallbackList.unregister(listener);
+            }
+        }
+
+        @Override
+        public void registerNFCErrorListener(INFCErrorListener errorlistener) throws RemoteException {
+            if (errorlistener != null) {
+                errorListenerRemoteCallbackList.register(errorlistener);
+            }
+        }
+
+        @Override
+        public void unregisterNFCErrorListener(INFCErrorListener errorlistener) throws RemoteException {
+            if (errorlistener != null) {
+                errorListenerRemoteCallbackList.unregister(errorlistener);
             }
         }
 
@@ -232,16 +280,10 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
     }
 
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        init();
-        LogUtils.d(Config.TAG_NFC, "开启NFC服务");
-    }
-
     private void init() {
         LogUtils.enable(showLog);
-        //串口控制
+        LogUtils.d(Config.TAG_NFC, "NFC服务初始化");
+        //串口读写控制
         mSerialPortController = new SerialPortController();
         mSerialPortController.setOnSerialPortControllerListener(this);
         mSerialPortController.init();
@@ -255,7 +297,6 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
         mNFCParse = new NFCParse();
         mNFCParse.setParseListener(this);
     }
-
 
     private void openFindCard() {
         LogUtils.d(Config.TAG_NFC, "开启寻卡");
@@ -303,7 +344,6 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
 
     private void releaseSerialPortController() {
         if (mSerialPortController != null) {
-            mSerialPortController.setOnSerialPortControllerListener(null);
             mSerialPortController.release();
             mSerialPortController = null;
         }
@@ -311,17 +351,9 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
 
     private void releaseNFCParse() {
         if (mNFCParse != null) {
-            mNFCParse.setParseListener(null);
             mNFCParse.release();
             mNFCParse = null;
         }
-    }
-
-    private void release() {
-        releaseSerialPortController();
-        closeSendThread();
-        releaseNFCParse();
-        remoteCallbackList.kill();
     }
 
     private void closeSendThread() {
@@ -335,10 +367,22 @@ public class NFCService extends Service implements Handler.Callback, OnNFCParseL
         }
     }
 
+    private void release() {
+        releaseSerialPortController();
+        closeSendThread();
+        releaseNFCParse();
+        if (serviceListenerRemoteCallbackList != null) {
+            serviceListenerRemoteCallbackList.kill();
+        }
+        if (errorListenerRemoteCallbackList != null) {
+            errorListenerRemoteCallbackList.kill();
+        }
+    }
+
     @Override
     public void onDestroy() {
         release();
-        LogUtils.d(Config.TAG_NFC, "NFC服务销毁");
+        LogUtils.d(Config.TAG_NFC, "NFC销毁");
         super.onDestroy();
     }
 }

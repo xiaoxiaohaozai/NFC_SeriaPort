@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.hc.tools.lib_nfc.nfc.NFCManager;
+import com.hc.tools.lib_nfc.nfc.OnNFCErrorListener;
 import com.hc.tools.lib_nfc.nfc.OnNFCManagerListener;
 
 /**
@@ -67,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.bt_1:
-                NFCManager.get().init(this).setAutoGetNumber(false);
+                NFCManager.get().init(this);
                 NFCManager.get().setNfcManagerListener(new OnNFCManagerListener() {
                     @Override
                     public void hasCard(boolean hasCard) {
@@ -77,6 +78,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void getCardNumber(String number) {
                         updateTv(number);
+                    }
+                });
+                NFCManager.get().setNfcErrorListener(new OnNFCErrorListener() {
+                    @Override
+                    public void OnNFCError(int errorCode) {
+
                     }
                 });
                 break;

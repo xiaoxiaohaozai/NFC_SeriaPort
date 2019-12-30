@@ -13,7 +13,7 @@ import java.util.concurrent.BlockingQueue;
  * 创建日期: 2019-12-29
  * 描述:
  * 阻塞发送指令
-*/
+ */
 public class WriteThread extends Thread {
     private static final int DEFAULT_QUEUE_SIZE = 30;
     private volatile OutputStream output;
@@ -78,6 +78,9 @@ public class WriteThread extends Thread {
         if (mSendQueues != null) {
             mSendQueues.clear();
             mSendQueues = null;
+        }
+        if (onWriteListener != null) {
+            onWriteListener = null;
         }
         if (output != null) {
             output = null;

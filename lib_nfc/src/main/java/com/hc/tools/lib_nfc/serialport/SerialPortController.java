@@ -1,12 +1,14 @@
 package com.hc.tools.lib_nfc.serialport;
 
 
+import com.hc.tools.lib_nfc.constant.Config;
+
 /**
  * 作者: chenhao
  * 创建日期: 2019-12-29
  * 描述:
  * 串口控制类
-*/
+ */
 public class SerialPortController implements OnReadListener, OnWriteListener {
 
     private SerialPortCore mSerialPortCore;
@@ -21,9 +23,13 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
     public void init() {
         mSerialPortCore = new SerialPortCore();
         mSerialPortCore.initPort();
-        if (mSerialPortCore.getState() == SerialPortCore.SerialPortState.OPEN) {
-            initThread();
+        if (mSerialPortCore.getState() == SerialPortCore.SerialPortState.CLOSE) {
+            if (listener != null) {
+                listener.onSerialPortError(Config.CODE_OPEN_ERROR);
+            }
+            return;
         }
+        initThread();
     }
 
 
@@ -44,21 +50,20 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
      * @param data
      */
     public void sendCommond(byte[] data) {
-        if (mSerialPortCore.getState() == SerialPortCore.SerialPortState.OPEN) {
-            if (mWriteThread != null && !mWriteThread.isInterrupted()) {
-                mWriteThread.sendCommond(data);
-            }
+        if (mSerialPortCore.getState() == SerialPortCore.SerialPortState.CLOSE) {
+            return;
+        }
+        if (mWriteThread != null && !mWriteThread.isInterrupted()) {
+            mWriteThread.sendCommond(data);
         }
     }
 
     public void releaseThread() {
         if (mReadThead != null) {
-            mReadThead.setReadListener(null);
             mReadThead.close();
             mReadThead = null;
         }
         if (mWriteThread != null) {
-            mWriteThread.setOnWriteListener(null);
             mWriteThread.close();
             mWriteThread = null;
         }
@@ -74,6 +79,9 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
     public void release() {
         releaseSerialPortCore();
         releaseThread();
+        if (listener != null) {
+            listener = null;
+        }
     }
 
     /**
@@ -91,7 +99,9 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
 
     @Override
     public void writeStop() {
-
+        if (listener != null) {
+            listener.onSerialPortError(Config.CODE_WRITE_ERROR);
+        }
     }
 
     /**
@@ -107,9 +117,10 @@ public class SerialPortController implements OnReadListener, OnWriteListener {
         }
     }
 
-
     @Override
     public void onReadStop() {
-
+        if (listener != null) {
+            listener.onSerialPortError(Config.CODE_READ_ERROR);
+        }
     }
 }

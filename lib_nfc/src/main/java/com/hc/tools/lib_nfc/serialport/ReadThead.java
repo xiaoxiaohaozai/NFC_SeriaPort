@@ -59,6 +59,9 @@ public class ReadThead extends Thread {
         if (!isInterrupted()) {
             interrupt();
         }
+        if (readListener != null) {
+            readListener = null;
+        }
         if (input != null) {
             input = null;
         }

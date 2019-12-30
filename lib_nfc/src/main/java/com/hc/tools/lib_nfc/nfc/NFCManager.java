@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
 
+import com.hc.tools.lib_nfc.INFCErrorListener;
 import com.hc.tools.lib_nfc.INFCServiceFunction;
 import com.hc.tools.lib_nfc.INFCServiceListener;
 import com.hc.tools.lib_nfc.utils.LogUtils;
@@ -27,11 +28,8 @@ public class NFCManager implements ServiceConnection {
     private static volatile NFCManager instance;
     private INFCServiceFunction mNfcServiceFunction;
     private volatile OnNFCManagerListener nfcManagerListener;
+    private volatile OnNFCErrorListener nfcErrorListener;
 
-
-    public void setNfcManagerListener(OnNFCManagerListener nfcManagerListener) {
-        this.nfcManagerListener = nfcManagerListener;
-    }
 
     public static NFCManager get() {
         if (instance == null) {
@@ -49,22 +47,15 @@ public class NFCManager implements ServiceConnection {
         return this;
     }
 
-    public void release(Context context) {
-        if (isAlive()) {
-            try {
-                mNfcServiceFunction.unregisterNFCServiceListener(nfcServiceCallback);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        }
-        if (nfcManagerListener != null) {
-            nfcManagerListener = null;
-        }
-        NFCService.unBindNFCService(context, this);
+
+    public NFCManager setNfcManagerListener(OnNFCManagerListener nfcManagerListener) {
+        this.nfcManagerListener = nfcManagerListener;
+        return this;
     }
 
-    private boolean isAlive() {
-        return mNfcServiceFunction != null && mNfcServiceFunction.asBinder().isBinderAlive();
+    public NFCManager setNfcErrorListener(OnNFCErrorListener nfcErrorListener) {
+        this.nfcErrorListener = nfcErrorListener;
+        return this;
     }
 
     /**
@@ -164,19 +155,34 @@ public class NFCManager implements ServiceConnection {
         mNfcServiceFunction = INFCServiceFunction.Stub.asInterface(service);
         try {
             mNfcServiceFunction.registerNFCServiceListener(nfcServiceCallback);
+
+            mNfcServiceFunction.registerNFCErrorListener(nfcErrorCallback);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * 连接断开
+     * 当Service进程被crashed or killed(异常终止等)则回调onServiceDisconnected函数。
      *
      * @param componentName
      */
     @Override
     public void onServiceDisconnected(ComponentName componentName) {
         mNfcServiceFunction = null;
+    }
+
+    private INFCErrorListener nfcErrorCallback = new INFCErrorListener.Stub() {
+        @Override
+        public void onNFCError(int code) throws RemoteException {
+            if (nfcErrorListener != null) {
+                nfcErrorListener.OnNFCError(code);
+            }
+        }
+    };
+
+    private boolean isAlive() {
+        return mNfcServiceFunction != null && mNfcServiceFunction.asBinder().isBinderAlive();
     }
 
 
@@ -199,5 +205,21 @@ public class NFCManager implements ServiceConnection {
         }
     };
 
-
+    public void release(Context context) {
+        if (isAlive()) {
+            try {
+                mNfcServiceFunction.unregisterNFCServiceListener(nfcServiceCallback);
+                mNfcServiceFunction.unregisterNFCErrorListener(nfcErrorCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+        if (nfcManagerListener != null) {
+            nfcManagerListener = null;
+        }
+        if (nfcErrorCallback != null) {
+            nfcErrorCallback = null;
+        }
+        NFCService.unBindNFCService(context, this);
+    }
 }

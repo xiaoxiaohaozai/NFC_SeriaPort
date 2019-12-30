@@ -4,4 +4,7 @@ public interface OnSerialPortControllerListener {
     void onWriteData(byte[] data);
 
     void onReceiveData(byte[] buffer, int size);
+
+    void onSerialPortError(int code);
+
 }

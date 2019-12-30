@@ -160,6 +160,9 @@ public class NFCParse {
     public void release() {
         mHasFoundHead = false;
         mResult.delete(0, mResult.length());
+        if (parseListener != null) {
+            parseListener = null;
+        }
     }
 
 }

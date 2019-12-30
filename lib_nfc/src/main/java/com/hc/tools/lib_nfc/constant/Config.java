@@ -37,5 +37,8 @@ public class Config {
 
     public static final byte[] CMD_BYTES_GET_CARD_NUMBER_SEND = CMD_GET_CARD_NUMBER_SEND.getBytes();
 
+    public static final int CODE_OPEN_ERROR = 0x01;
+    public static final int CODE_READ_ERROR = 0x02;
+    public static final int CODE_WRITE_ERROR = 0x03;
 
 }

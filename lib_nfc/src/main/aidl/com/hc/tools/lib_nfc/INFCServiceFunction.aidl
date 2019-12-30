@@ -1,8 +1,9 @@
 // INFCFunction.aidl
 package com.hc.tools.lib_nfc;
 
-
 import com.hc.tools.lib_nfc.INFCServiceListener;
+
+import com.hc.tools.lib_nfc.INFCErrorListener;
 
 interface INFCServiceFunction {
 
@@ -17,6 +18,8 @@ interface INFCServiceFunction {
    void registerNFCServiceListener(INFCServiceListener listener);
    void unregisterNFCServiceListener(INFCServiceListener listener);
 
-   void showLog(boolean show);
+   void registerNFCErrorListener(INFCErrorListener errorlistener);
+   void unregisterNFCErrorListener(INFCErrorListener errorlistener);
 
+   void showLog(boolean show);
 }
